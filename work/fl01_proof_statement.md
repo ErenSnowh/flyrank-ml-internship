@@ -1,6 +1,6 @@
 # FL-01 — What Are You Proving?
 
-**Intern:** Sohail (ErenSnowh) · **Track:** ML · **Week:** 1
+**Intern:** Vinayak (ErenSnowh) · **Track:** ML · **Week:** 1
 
 ---
 
