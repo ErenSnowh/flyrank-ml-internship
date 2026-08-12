@@ -1,0 +1,44 @@
+{
+  "notebook": "w06_validation_audit.ipynb",
+  "assignment": "ML-09 Validation and Research Claim Audit",
+  "random_state": 42,
+  "total_records": 30000,
+  "features_audited": 52,
+  "forbidden_columns_leaked": 0,
+  "injection_attack_test_passed": true,
+  "leakage_assertion_passed": true,
+  "split_comparison": [
+    {
+      "model": "Decision Tree (depth=5)",
+      "rand_base_rate": 0.542,
+      "rand_p20": 0.9,
+      "rand_p50": 0.94,
+      "rand_auc": 0.7170850297476775,
+      "rand_ap": 0.7009977432910532,
+      "rand_acc": 0.6685,
+      "grp_base_rate": 0.3909677419354839,
+      "grp_p20": 0.8,
+      "grp_p50": 0.68,
+      "grp_auc": 0.7415203737887913,
+      "grp_ap": 0.5753189989001579,
+      "grp_acc": 0.6765591397849462
+    },
+    {
+      "model": "Random Forest (n=200)",
+      "rand_base_rate": 0.542,
+      "rand_p20": 0.9,
+      "rand_p50": 0.9,
+      "rand_auc": 0.7580359236998483,
+      "rand_ap": 0.768734228340153,
+      "rand_acc": 0.6916666666666667,
+      "grp_base_rate": 0.3909677419354839,
+      "grp_p20": 0.7,
+      "grp_p50": 0.68,
+      "grp_auc": 0.7473724773607304,
+      "grp_ap": 0.6100580703940904,
+      "grp_acc": 0.6713978494623656
+    }
+  ],
+  "claims_rewritten": 4,
+  "claim_language_standard": "observed, measured, directional, decision-support"
+}
