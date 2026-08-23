@@ -1,0 +1,70 @@
+{
+  "notebook": "w07_action_playbook.ipynb",
+  "assignment": "ML-10 Content Action Playbook",
+  "random_state": 42,
+  "total_pages_scored": 30000,
+  "action_distribution": {
+    "monitor": 13069,
+    "refresh": 8207,
+    "refresh_and_review_ctr": 6655,
+    "refresh_and_review_engagement": 1987,
+    "expand_and_refresh": 82
+  },
+  "confidence_distribution": {
+    "low": 15000,
+    "medium": 11424,
+    "high": 3576
+  },
+  "high_confidence_pages": 3576,
+  "pages_needing_action": 16931,
+  "model_used": "decision_tree",
+  "model_precision_at_50": 0.68,
+  "base_rate": 0.3909677419354839,
+  "validation_strategy": "client_holdout",
+  "leakage_assertion_passed": true,
+  "claim_language_standard": "observed, measured, directional, decision-support",
+  "no_go_items": [
+    "Auto-publish without human review",
+    "Delete or redirect pages from model scores alone",
+    "Set budgets or SLAs from model scores",
+    "Promise clients that refresh will improve rankings",
+    "Apply queue to new clients without re-validation"
+  ],
+  "retrain_triggers": [
+    "Data > 90 days old",
+    "Feature distribution shift (KS p < 0.01)",
+    "Label drift > 5pp from base rate",
+    "Precision@50 drops below 0.50",
+    "Client portfolio change",
+    "Major search algorithm update"
+  ],
+  "drift_baselines": {
+    "content_age_days": {
+      "mean": 256.1678,
+      "std": 132.7079,
+      "p25": 132.0,
+      "median": 236.0,
+      "p75": 333.0
+    },
+    "avg_position": {
+      "mean": 16.3424,
+      "std": 15.2168,
+      "p25": 6.2,
+      "median": 10.8,
+      "p75": 22.3
+    }
+  },
+  "action_mix_baseline": {
+    "monitor": 0.4356,
+    "refresh": 0.2736,
+    "refresh_and_review_ctr": 0.2218,
+    "refresh_and_review_engagement": 0.0662,
+    "expand_and_refresh": 0.0027
+  },
+  "exports": [
+    "work/outputs/w07_playbook_queue.csv",
+    "work/outputs/w07_playbook_receipt.json",
+    "work/figures/w07_action_confidence_mix.png",
+    "work/figures/w07_reason_code_frequency.png"
+  ]
+}
