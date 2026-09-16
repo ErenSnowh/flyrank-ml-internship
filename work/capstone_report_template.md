@@ -1,5 +1,4 @@
 # Capstone Report — <your lane>
-
 - **Author:**
 - **Lane:**
 - **Repo:**

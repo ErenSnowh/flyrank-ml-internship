@@ -61,7 +61,7 @@ Best model: `random_forest` selected by `precision_at_50`.
 | 9 | 80.2 | 0.824 | refresh_and_review_ctr | declining_with_demand, low_ctr_visible_page, low_engagement_visible_page, model_decline_risk, visible_model_opportunity, ctr_review_candidate, engagement_review_candidate | 2655 | 92 | down |
 | 10 | 80.1 | 0.831 | refresh_and_review_ctr | declining_with_demand, low_ctr_visible_page, model_decline_risk, visible_model_opportunity, ctr_review_candidate | 2621 | 10 | down |
 
-## Generated Files
+## output Files
 
 - `outputs/refresh_queue.csv`
 - `outputs/model_results.json`

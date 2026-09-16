@@ -1,11 +1,10 @@
-# --- Data leak guard -------------------------------------------------------
-# Block every dataset by default. Only the tiny anonymized starter slice ships.
+
 data/**
 !data/
 !data/raw/
 !data/raw/content_refresh_anonymized.csv
 
-# Never commit bulk dataset dumps or archives
+
 *.parquet
 *.zip
 *.tar
@@ -34,3 +33,10 @@ __pycache__/
 .venv/
 venv/
 .env
+
+# --- External non-project files ---
+9a0812_a54e00d2025d491c937c2635dfbcb398/
+Maitri AI.pdf
+outputs/charts/userinputprogram.*
+*.exe
+

@@ -3,404 +3,808 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Can Behavioral Signals Predict Content Decline? — FlyRank ML Research</title>
+  <title>Can Behavioral Signals Predict Content Decline? — Vinayak Pandey</title>
   <meta name="description" content="A research paper exploring whether behavioral signals from search and analytics data can predict declining content trends, built on 30,000 pseudonymized pages from FlyRank's ML Internship dataset.">
+  <meta name="author" content="Vinayak Pandey">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    /* ═══════════════════════════════════════
+       TOKENS & RESET
+       ═══════════════════════════════════════ */
     :root {
-      --bg: #0a0f1a;
-      --bg-card: #111827;
-      --bg-card-hover: #1a2332;
+      --bg-deep: #06080d;
+      --bg: #0b0f19;
+      --bg-elevated: #111827;
+      --bg-card: #141c2b;
+      --bg-card-hover: #1a243a;
       --surface: #1e293b;
-      --surface-2: #253347;
+      --surface-2: #283548;
       --text: #e2e8f0;
-      --text-muted: #94a3b8;
+      --text-secondary: #94a3b8;
       --text-dim: #64748b;
-      --heading: #f1f5f9;
-      --accent: #38bdf8;
-      --accent-2: #818cf8;
-      --accent-3: #a78bfa;
-      --green: #34d399;
-      --green-dim: #065f46;
-      --amber: #fbbf24;
-      --rose: #fb7185;
-      --border: rgba(148,163,184,0.12);
-      --glow: rgba(56,189,248,0.08);
-      --radius: 12px;
-      --mono: 'JetBrains Mono', monospace;
+      --text-ghost: #475569;
+      --heading: #f8fafc;
+      --cyan: #22d3ee;
+      --blue: #3b82f6;
+      --indigo: #6366f1;
+      --violet: #8b5cf6;
+      --pink: #ec4899;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --border: rgba(148,163,184,0.08);
+      --border-subtle: rgba(148,163,184,0.05);
+      --glow-cyan: rgba(34,211,238,0.15);
+      --glow-violet: rgba(139,92,246,0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --sans: 'Outfit', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      --display: 'Space Grotesk', 'Outfit', system-ui, sans-serif;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+      --shadow-md: 0 8px 32px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 60px rgba(34,211,238,0.08);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1.7;
+      font-family: var(--sans);
+      line-height: 1.75;
       color: var(--text);
-      background: var(--bg);
+      background: var(--bg-deep);
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
     }
 
-    /* ── HERO ── */
+    /* film grain overlay for that hand-made feel */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ═══════════════════════════════════════
+       SCROLL REVEAL ANIMATION
+       ═══════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════
+       HERO
+       ═══════════════════════════════════════ */
     .hero {
       position: relative;
-      padding: 5rem 2rem 4rem;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem;
       overflow: hidden;
-      border-bottom: 1px solid var(--border);
     }
-    .hero::before {
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .hero-bg .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      will-change: transform;
+    }
+    .hero-bg .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(34,211,238,0.18), transparent 70%);
+      top: -15%; left: -10%;
+      animation: float-1 20s ease-in-out infinite;
+    }
+    .hero-bg .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15), transparent 70%);
+      bottom: -20%; right: -5%;
+      animation: float-2 25s ease-in-out infinite;
+    }
+    .hero-bg .orb-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(236,72,153,0.1), transparent 70%);
+      top: 50%; left: 60%;
+      animation: float-3 18s ease-in-out infinite;
+    }
+    @keyframes float-1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(60px, 40px) scale(1.1); }
+      66% { transform: translate(-30px, -20px) scale(0.95); }
+    }
+    @keyframes float-2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-50px, -30px) scale(1.05); }
+      66% { transform: translate(40px, 20px) scale(0.9); }
+    }
+    @keyframes float-3 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-40px, 30px); }
+    }
+
+    /* grid pattern behind hero */
+    .hero-bg::after {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56,189,248,0.12), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(129,140,248,0.08), transparent);
+      background-image:
+        linear-gradient(rgba(148,163,184,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.03) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
     }
-    .hero-inner {
+
+    .hero-content {
       position: relative;
-      max-width: 780px;
-      margin: 0 auto;
+      max-width: 820px;
+      text-align: center;
+      z-index: 2;
     }
-    .hero-badge {
+
+    .hero-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.35rem 1rem;
+      padding: 0.4rem 1.2rem;
       border-radius: 100px;
-      background: rgba(56,189,248,0.1);
-      border: 1px solid rgba(56,189,248,0.2);
-      color: var(--accent);
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.05em;
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.18);
+      color: var(--cyan);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(8px);
     }
-    .hero-badge::before {
-      content: '';
+    .hero-pill .dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--accent);
-      animation: pulse 2s infinite;
+      background: var(--cyan);
+      animation: blink 2.5s infinite;
     }
-    @keyframes pulse {
+    @keyframes blink {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      50% { opacity: 0.3; }
     }
+
     .hero h1 {
-      font-size: clamp(2rem, 4vw, 2.8rem);
-      font-weight: 800;
-      line-height: 1.15;
+      font-family: var(--display);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 900;
+      line-height: 1.08;
       color: var(--heading);
-      letter-spacing: -0.03em;
-      margin-bottom: 0.5rem;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.5rem;
     }
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--indigo) 50%, var(--violet) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
     .hero-subtitle {
-      font-size: 1.1rem;
-      color: var(--text-muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-secondary);
       font-weight: 300;
-      margin-bottom: 1.5rem;
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
     }
+
     .hero-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 1.5rem;
-      font-size: 0.88rem;
-      color: var(--text-dim);
+      justify-content: center;
+      gap: 0.6rem;
     }
-    .hero-meta a { color: var(--accent); text-decoration: none; }
-    .hero-meta a:hover { text-decoration: underline; }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      backdrop-filter: blur(8px);
+      transition: var(--transition);
+    }
+    .hero-tag:hover {
+      border-color: rgba(34,211,238,0.3);
+      background: rgba(34,211,238,0.06);
+      color: var(--cyan);
+    }
+    a.hero-tag { text-decoration: none; }
 
-    /* ── ABSTRACT ── */
-    .abstract-section {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 3rem 2rem;
-    }
-    .abstract-card {
-      position: relative;
-      padding: 2rem 2.5rem;
-      background: linear-gradient(135deg, rgba(56,189,248,0.06), rgba(129,140,248,0.04));
-      border: 1px solid rgba(56,189,248,0.15);
-      border-radius: var(--radius);
-      font-size: 0.95rem;
-      line-height: 1.85;
-      color: var(--text-muted);
-    }
-    .abstract-card::before {
-      content: 'ABSTRACT';
-      display: block;
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-ghost);
       font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: var(--accent);
-      margin-bottom: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: bob 2s ease-in-out infinite;
+    }
+    .scroll-hint .chevron {
+      width: 20px; height: 20px;
+      border-right: 2px solid var(--text-ghost);
+      border-bottom: 2px solid var(--text-ghost);
+      transform: rotate(45deg);
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
     }
 
-    /* ── NAV ── */
-    .nav-bar {
+    /* ═══════════════════════════════════════
+       STICKY NAV
+       ═══════════════════════════════════════ */
+    .nav {
       position: sticky;
       top: 0;
-      z-index: 100;
-      background: rgba(10,15,26,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
+      background: rgba(6,8,13,0.75);
+      backdrop-filter: blur(20px) saturate(1.6);
+      -webkit-backdrop-filter: blur(20px) saturate(1.6);
       border-bottom: 1px solid var(--border);
-      overflow-x: auto;
+      transition: box-shadow var(--transition);
+    }
+    .nav.scrolled {
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
     }
     .nav-inner {
-      max-width: 780px;
+      max-width: 880px;
       margin: 0 auto;
       display: flex;
-      gap: 0;
+      align-items: center;
+      justify-content: space-between;
       padding: 0 2rem;
     }
-    .nav-bar a {
+    .nav-logo {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--heading);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 0;
+    }
+    .nav-links a {
       display: block;
-      padding: 0.75rem 1rem;
-      font-size: 0.78rem;
+      padding: 0.85rem 0.9rem;
+      font-size: 0.75rem;
       font-weight: 500;
       color: var(--text-dim);
       text-decoration: none;
       white-space: nowrap;
       border-bottom: 2px solid transparent;
-      transition: all 0.2s;
+      transition: var(--transition);
+      letter-spacing: 0.02em;
     }
-    .nav-bar a:hover {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
     }
 
-    /* ── MAIN CONTENT ── */
-    .content {
-      max-width: 780px;
+    /* hamburger for mobile */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+      z-index: 1001;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--text-secondary);
+      margin: 5px 0;
+      border-radius: 2px;
+      transition: var(--transition);
+    }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* ═══════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════ */
+    .paper {
+      max-width: 820px;
       margin: 0 auto;
-      padding: 0 2rem 4rem;
+      padding: 0 2rem 5rem;
     }
 
-    h2 {
-      font-size: 1.5rem;
+    /* abstract */
+    .abstract {
+      margin: 3rem 0;
+      padding: 2.5rem;
+      position: relative;
+      background: linear-gradient(135deg, rgba(34,211,238,0.04), rgba(99,102,241,0.03));
+      border: 1px solid rgba(34,211,238,0.12);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .abstract::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--cyan), var(--violet));
+      border-radius: 4px 0 0 4px;
+    }
+    .abstract-label {
+      font-size: 0.65rem;
       font-weight: 700;
-      color: var(--heading);
-      margin: 3.5rem 0 1.2rem;
-      padding-top: 1rem;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
-      gap: 0.7rem;
+      gap: 0.5rem;
     }
-    h2 .num {
+    .abstract-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(34,211,238,0.2), transparent);
+    }
+    .abstract p {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: var(--text-secondary);
+    }
+
+    /* section headings */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 4rem 0 1.5rem;
+      padding-top: 1.5rem;
+    }
+    .section-num {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: var(--bg);
-      font-size: 0.85rem;
+      width: 40px; height: 40px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      color: var(--bg-deep);
+      font-family: var(--display);
+      font-size: 0.95rem;
       font-weight: 700;
       flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(34,211,238,0.2);
     }
+    .section-heading h2 {
+      font-family: var(--display);
+      font-size: clamp(1.3rem, 3vw, 1.7rem);
+      font-weight: 700;
+      color: var(--heading);
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+    }
+
     h3 {
+      font-family: var(--display);
       font-size: 1.05rem;
       font-weight: 600;
       color: var(--heading);
-      margin: 1.8rem 0 0.6rem;
+      margin: 2rem 0 0.8rem;
+      position: relative;
+      padding-left: 1rem;
     }
-    p { margin-bottom: 1rem; color: var(--text-muted); }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    strong { color: var(--text); }
-
-    /* ── TABLES ── */
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      margin: 1.2rem 0 1.5rem;
-      font-size: 0.88rem;
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    th {
-      padding: 0.7rem 1rem;
-      text-align: left;
-      font-weight: 600;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-dim);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    td {
-      padding: 0.65rem 1rem;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-muted);
-    }
-    tr:last-child td { border-bottom: none; }
-    td.num { text-align: right; font-family: var(--mono); font-size: 0.85rem; }
-    tr.winner { background: rgba(56,189,248,0.06); }
-    tr.winner td { color: var(--text); font-weight: 600; }
-
-    code {
-      font-family: var(--mono);
-      font-size: 0.82rem;
-      padding: 0.15rem 0.5rem;
-      background: var(--surface);
-      border-radius: 5px;
-      color: var(--accent-3);
-      border: 1px solid var(--border);
+    h3::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.15em;
+      width: 3px;
+      height: 1em;
+      border-radius: 3px;
+      background: linear-gradient(180deg, var(--cyan), var(--violet));
     }
 
-    ul, ol { margin: 0.5rem 0 1.2rem 1.2rem; color: var(--text-muted); }
-    li { margin-bottom: 0.4rem; }
-    li::marker { color: var(--accent); }
+    p { margin-bottom: 1.1rem; color: var(--text-secondary); font-size: 0.95rem; }
+    a { color: var(--cyan); text-decoration: none; transition: var(--transition); }
+    a:hover { color: #67e8f9; text-decoration: underline; text-underline-offset: 3px; }
+    strong { color: var(--text); font-weight: 600; }
 
-    /* ── METRIC CARDS ── */
-    .metrics-grid {
+    /* ═══════════════════════════════════════
+       DATA CARDS GRID
+       ═══════════════════════════════════════ */
+    .info-mosaic {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
       margin: 1.5rem 0 2rem;
     }
-    .metric-card {
+    .info-tile {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.2rem;
-      text-align: center;
-      transition: all 0.3s ease;
+      border-radius: var(--radius-sm);
+      padding: 1.2rem 1.4rem;
+      transition: var(--transition);
       position: relative;
       overflow: hidden;
     }
-    .metric-card:hover {
-      border-color: var(--accent);
+    .info-tile::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .info-tile:hover {
+      border-color: rgba(34,211,238,0.2);
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(56,189,248,0.1);
+      box-shadow: var(--shadow-glow);
     }
-    .metric-card.primary {
-      border-color: rgba(56,189,248,0.3);
-      background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(129,140,248,0.04));
-    }
-    .metric-card .value {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      margin-bottom: 0.3rem;
-    }
-    .metric-card.primary .value {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .metric-card .label {
-      font-size: 0.72rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-dim);
-    }
-
-    /* ── CHART CONTAINERS ── */
-    .chart-wrap {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin: 1.5rem 0;
-      transition: border-color 0.3s;
-    }
-    .chart-wrap:hover { border-color: rgba(56,189,248,0.2); }
-    .chart-wrap svg { display: block; max-width: 100%; margin: 0 auto; height: auto; }
-    .chart-caption {
-      text-align: center;
-      font-size: 0.82rem;
-      color: var(--text-dim);
-      margin-top: 0.8rem;
-      font-style: italic;
-    }
-
-    /* ── LIMITATIONS ── */
-    .limit-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--amber);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      padding: 1rem 1.2rem;
-      margin: 0.6rem 0;
-      font-size: 0.92rem;
-      transition: border-color 0.3s;
-    }
-    .limit-card:hover { border-left-color: var(--rose); }
-    .limit-card strong { color: var(--amber); }
-
-    /* ── INFO CARDS ── */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.8rem;
-      margin: 1rem 0 1.5rem;
-    }
-    .info-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.2rem;
-    }
-    .info-item .info-label {
-      font-size: 0.7rem;
+    .info-tile:hover::after { opacity: 1; }
+    .info-tile .tile-label {
+      font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-dim);
-      margin-bottom: 0.3rem;
+      letter-spacing: 0.1em;
+      color: var(--text-ghost);
+      margin-bottom: 0.4rem;
     }
-    .info-item .info-value {
-      font-size: 0.92rem;
+    .info-tile .tile-value {
+      font-size: 0.95rem;
       color: var(--text);
       font-weight: 500;
     }
 
-    /* ── FOOTER ── */
-    .footer {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 2rem;
-      border-top: 1px solid var(--border);
+    /* ═══════════════════════════════════════
+       TABLES
+       ═══════════════════════════════════════ */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 1.5rem 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+    th {
+      padding: 0.8rem 1.2rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-ghost);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+    td {
+      padding: 0.7rem 1.2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    tr:last-child td { border-bottom: none; }
+    td.num {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 0.83rem;
+      font-weight: 500;
+    }
+    tr.winner {
+      background: rgba(34,211,238,0.05);
+    }
+    tr.winner td {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding: 0.15rem 0.5rem;
+      background: rgba(139,92,246,0.1);
+      border-radius: var(--radius-xs);
+      color: var(--violet);
+      border: 1px solid rgba(139,92,246,0.15);
+    }
+
+    ul, ol { margin: 0.6rem 0 1.3rem 1.3rem; color: var(--text-secondary); }
+    li { margin-bottom: 0.5rem; font-size: 0.93rem; }
+    li::marker { color: var(--cyan); }
+
+    /* ═══════════════════════════════════════
+       METRIC HERO CARDS
+       ═══════════════════════════════════════ */
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin: 2rem 0;
+    }
+    .metric-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1rem;
       text-align: center;
-      color: var(--text-dim);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-block::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .metric-block:hover {
+      transform: translateY(-3px);
+      border-color: rgba(34,211,238,0.25);
+      box-shadow: var(--shadow-glow);
+    }
+    .metric-block:hover::before { opacity: 1; }
+    .metric-block.hero-metric {
+      border-color: rgba(34,211,238,0.2);
+      background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(99,102,241,0.04));
+    }
+    .metric-block.hero-metric::before {
+      background: radial-gradient(circle at center, rgba(34,211,238,0.08), transparent 70%);
+    }
+    .metric-val {
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .metric-block.hero-metric .metric-val {
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .metric-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-ghost);
+      line-height: 1.4;
+    }
+
+    /* ═══════════════════════════════════════
+       CHART CONTAINERS
+       ═══════════════════════════════════════ */
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 2rem 0;
+      transition: var(--transition);
+      overflow-x: auto;
+    }
+    .chart-card:hover {
+      border-color: rgba(34,211,238,0.15);
+      box-shadow: var(--shadow-glow);
+    }
+    .chart-card svg {
+      display: block;
+      max-width: 100%;
+      margin: 0 auto;
+      height: auto;
+    }
+    .chart-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-ghost);
+      margin-top: 1rem;
+      font-style: italic;
+    }
+
+    /* ═══════════════════════════════════════
+       LIMITATION CARDS
+       ═══════════════════════════════════════ */
+    .limitations-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 1.5rem 0;
+    }
+    .caveat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 1.1rem 1.4rem;
+      font-size: 0.92rem;
+      transition: var(--transition);
+    }
+    .caveat:hover {
+      border-left-color: var(--rose);
+      background: var(--bg-card-hover);
+      transform: translateX(4px);
+    }
+    .caveat strong {
+      color: var(--amber);
+      font-weight: 600;
+    }
+    .caveat:hover strong { color: var(--rose); }
+
+    /* ═══════════════════════════════════════
+       NOTEBOOK GRID
+       ═══════════════════════════════════════ */
+    .nb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 0.6rem;
+      margin: 1.5rem 0;
+    }
+    .nb-card {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1.1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: var(--transition);
       font-size: 0.85rem;
     }
-    .footer a { color: var(--accent); }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 640px) {
-      .hero { padding: 3rem 1.2rem 2.5rem; }
-      .abstract-section, .content { padding-left: 1.2rem; padding-right: 1.2rem; }
-      .nav-inner { padding: 0 1rem; }
-      .metrics-grid { grid-template-columns: 1fr 1fr; }
-      h2 { font-size: 1.3rem; }
-      .hero h1 { font-size: 1.8rem; }
-      .abstract-card { padding: 1.5rem; }
+    .nb-card:hover {
+      border-color: var(--cyan);
+      background: var(--bg-card-hover);
+      text-decoration: none;
+      transform: translateX(4px);
+      box-shadow: -4px 0 12px rgba(34,211,238,0.08);
     }
+    .nb-card .nb-ico {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-xs);
+      background: linear-gradient(135deg, rgba(34,211,238,0.12), rgba(99,102,241,0.08));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .nb-card .nb-title { color: var(--text); font-weight: 500; }
+    .nb-card .nb-sub { color: var(--text-ghost); font-size: 0.75rem; }
 
-    /* ── FEATURE IMPORTANCE BAR ANIMATION ── */
+    /* ═══════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════ */
+    .site-footer {
+      position: relative;
+      overflow: hidden;
+    }
+    .site-footer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 100%, rgba(34,211,238,0.05), transparent),
+        radial-gradient(ellipse 50% 50% at 70% 100%, rgba(139,92,246,0.04), transparent);
+    }
+    .footer-inner {
+      position: relative;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .footer-brand h3 {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--heading);
+      margin-bottom: 0.6rem;
+      padding-left: 0;
+    }
+    .footer-brand h3::before { display: none; }
+    .footer-brand p {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .footer-col h4 {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-ghost);
+      margin-bottom: 0.8rem;
+    }
+    .footer-col a {
+      display: block;
+      padding: 0.25rem 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .footer-col a:hover { color: var(--cyan); transform: translateX(3px); }
+
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.78rem;
+      color: var(--text-ghost);
+    }
+    .footer-bottom a { color: var(--text-dim); }
+    .footer-bottom a:hover { color: var(--cyan); }
+
+    /* ═══════════════════════════════════════
+       FEATURE BAR ANIMATION
+       ═══════════════════════════════════════ */
     .bar-animated rect.bar {
-      animation: growBar 1s ease-out forwards;
+      animation: growBar 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       transform-origin: left;
     }
     @keyframes growBar {
@@ -408,448 +812,662 @@
       to { transform: scaleX(1); }
     }
 
-    /* ── NOTEBOOK LINKS ── */
-    .notebook-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 0.6rem;
-      margin: 1rem 0 1.5rem;
-    }
-    .notebook-link {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.7rem 1rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.2s;
-      font-size: 0.85rem;
-    }
-    .notebook-link:hover {
-      border-color: var(--accent);
-      background: var(--bg-card-hover);
-      text-decoration: none;
-      transform: translateX(3px);
-    }
-    .notebook-link .nb-icon {
-      width: 28px; height: 28px;
-      border-radius: 6px;
-      background: var(--surface);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem;
-      flex-shrink: 0;
-    }
-    .notebook-link .nb-name { color: var(--text); font-weight: 500; }
-    .notebook-link .nb-desc { color: var(--text-dim); font-size: 0.78rem; }
-
-    /* scrollbar */
+    /* custom scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE — TABLET
+       ═══════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .hero { padding: 4rem 1.5rem 3rem; min-height: 90vh; }
+      .hero h1 { font-size: clamp(2rem, 7vw, 3rem); }
+      .paper { padding: 0 1.5rem 3rem; }
+      .abstract { padding: 2rem 1.8rem; }
+      .metric-strip { grid-template-columns: repeat(2, 1fr); }
+      .info-mosaic { grid-template-columns: repeat(2, 1fr); }
+      .nb-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .chart-card { padding: 1.2rem; }
+      .chart-card svg { min-width: 500px; }
+      .section-heading { margin: 3rem 0 1.2rem; }
+
+      /* nav collapse */
+      .nav-toggle { display: block; }
+      .nav-links {
+        position: fixed;
+        top: 0; right: 0;
+        width: min(300px, 80vw);
+        height: 100vh;
+        flex-direction: column;
+        background: rgba(6,8,13,0.97);
+        backdrop-filter: blur(24px);
+        padding: 5rem 2rem 2rem;
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 999;
+        border-left: 1px solid var(--border);
+        box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+      }
+      .nav-links.open { transform: translateX(0); }
+      .nav-links a {
+        font-size: 0.95rem;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .nav-links a:last-child { border-bottom: none; }
+
+      /* overlay */
+      .nav-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 998;
+      }
+      .nav-overlay.show { display: block; }
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE — MOBILE
+       ═══════════════════════════════════════ */
+    @media (max-width: 480px) {
+      html { font-size: 15px; }
+      .hero { padding: 3rem 1rem 2.5rem; min-height: 80vh; }
+      .hero-subtitle { font-size: 0.95rem; }
+      .hero-meta { gap: 0.4rem; }
+      .hero-tag { font-size: 0.75rem; padding: 0.35rem 0.8rem; }
+      .paper { padding: 0 1rem 2.5rem; }
+      .abstract { padding: 1.5rem; }
+      .metric-strip { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .metric-block { padding: 1.1rem 0.8rem; }
+      .metric-val { font-size: 1.5rem; }
+      .info-mosaic { grid-template-columns: 1fr; }
+      .section-heading h2 { font-size: 1.2rem; }
+      .section-num { width: 34px; height: 34px; font-size: 0.85rem; }
+      .table-wrap { margin: 1rem -1rem; border-radius: 0; border-left: none; border-right: none; }
+      th, td { padding: 0.6rem 0.8rem; }
+      .caveat { padding: 0.9rem 1rem; }
+      .chart-card { margin: 1rem 0; padding: 1rem; }
+      .footer-inner { padding: 2.5rem 1rem; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .scroll-hint { display: none; }
+    }
+
+    /* ═══════════════════════════════════════
+       LARGE SCREENS
+       ═══════════════════════════════════════ */
+    @media (min-width: 1200px) {
+      .hero { padding: 8rem 2rem 5rem; }
+      .hero h1 { font-size: 4.2rem; }
+    }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════ HERO ═══════════════ -->
-<header class="hero">
-  <div class="hero-inner">
-    <div class="hero-badge">Research Paper · Lane 2 Refresh Scoring</div>
-    <h1>Can Behavioral Signals<br><span>Predict Content Decline?</span></h1>
-    <p class="hero-subtitle">A Machine-Learning Approach to Content Refresh Prioritization</p>
+<header class="hero" id="top">
+  <div class="hero-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-pill"><span class="dot"></span>Research Paper · Lane 2 — Refresh Scoring</div>
+    <h1>Can Behavioral Signals<br><span class="gradient-text">Predict Content Decline?</span></h1>
+    <p class="hero-subtitle">A machine-learning approach to content refresh prioritization — built on 30,000 pseudonymized pages across 32 clients.</p>
     <div class="hero-meta">
-      <span><strong>Vinayak Suresh Menon</strong></span>
-      <span>FlyRank ML Internship</span>
-      <span>August 2026</span>
-      <a href="https://github.com/ErenSnowh/flyrank-ml-internship">GitHub →</a>
+      <span class="hero-tag">👤 Vinayak Pandey</span>
+      <span class="hero-tag">🎓 FlyRank ML Internship</span>
+      <span class="hero-tag">📅 September 2026</span>
+      <a class="hero-tag" href="https://github.com/ErenSnowh/flyrank-ml-internship" target="_blank" rel="noopener">⟶ GitHub Repo</a>
+      <a class="hero-tag" href="https://allabtme.vercel.app/" target="_blank" rel="noopener">🌐 Portfolio</a>
     </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="chevron"></div>
   </div>
 </header>
 
 <!-- ═══════════════ NAV ═══════════════ -->
-<nav class="nav-bar">
+<nav class="nav" id="main-nav">
   <div class="nav-inner">
-    <a href="#abstract">Abstract</a>
-    <a href="#introduction">Introduction</a>
-    <a href="#data">Data</a>
-    <a href="#methodology">Methodology</a>
-    <a href="#results">Results</a>
-    <a href="#limitations">Limitations</a>
-    <a href="#recommendations">Recommendations</a>
-    <a href="#reproducibility">Reproducibility</a>
+    <a class="nav-logo" href="#top">VP Research</a>
+    <div class="nav-links" id="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#introduction">Introduction</a>
+      <a href="#data">Data</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#results">Results</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#recommendations">Actions</a>
+      <a href="#reproducibility">Reproduce</a>
+    </div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
   </div>
+  <div class="nav-overlay" id="nav-overlay"></div>
 </nav>
 
 <!-- ═══════════════ ABSTRACT ═══════════════ -->
-<section class="abstract-section" id="abstract">
-  <div class="abstract-card">
-    Content teams managing large portfolios face a recurring question: which pages should be refreshed first?
-    Using 30,000 pseudonymized content pages from 32 clients (trailing 90-day behavioral metrics),
-    we trained a decision-tree classifier to predict impression-trend decline — a proxy for editorial attention priority.
-    On a client-holdout evaluation (clients unseen during training), the model achieved <strong>Precision@50 of 0.68</strong>
-    (base rate 0.39), a <strong>1.7× lift over random</strong> and a <strong>2.8× lift over a hand-crafted rule baseline</strong> (P@50 = 0.24).
-    The output is a ranked refresh queue with transparent reason codes and action labels,
-    designed as a human-reviewed decision-support tool — not an automated publishing system.
+<section class="paper" id="abstract">
+  <div class="abstract reveal">
+    <div class="abstract-label">Abstract · FlyRank Case Study</div>
+    <p>
+      FlyRank operates autonomous content infrastructure at scale, continuously researching, publishing, and optimizing client portfolios.
+      In large-scale content operations, assets inevitably experience search decay: rankings slip, impressions drop, and manual triage across thousands of URLs becomes untenable.
+      Existing production workflows rely on hand-written heuristic flags (such as static health scores and freshness thresholds), which struggle to capture multi-variable interactions in noisy search telemetry.
+      This case study evaluates whether behavioral signals from search and analytics data can reliably predict impression decline to prioritize editorial refresh queues.
+      Using 30,000 pseudonymized content pages across 32 enterprise clients (trailing 90-day behavioral metrics),
+      we trained a shallow decision-tree classifier evaluated on strict client-holdout splits (clients completely unseen during training).
+      The model achieved <strong>Precision@50 of 0.68</strong> against a 0.39 base rate — representing a <strong>1.7× lift over random selection</strong> and a <strong>2.8× lift over FlyRank's hand-crafted rule baseline</strong> (P@50&nbsp;=&nbsp;0.24).
+      Rather than replacing human oversight, the system outputs an interpretable ranked queue with transparent reason codes and actionable editorial playbooks, demonstrating how learned models enhance human editorial bandwidth in production SEO pipelines.
+    </p>
   </div>
 </section>
 
 <!-- ═══════════════ MAIN ═══════════════ -->
-<main class="content">
+<main class="paper">
 
 <!-- ── 1. INTRODUCTION ── -->
-<h2 id="introduction"><span class="num">1</span> Introduction &amp; Problem Statement</h2>
-<p>
-  Content portfolios at scale decay silently. Pages that once ranked well lose impressions as
-  competitors publish, algorithms update, and user intent shifts. An editorial team reviewing
-  thousands of pages manually cannot identify which ones need attention most urgently.
-</p>
-<p>
-  This project frames that editorial decision as a classification problem:
-  <em>given a page's behavioral signals (search impressions, click-through rate, engagement metrics,
-  content age, position), can we predict whether its impression trend is declining?</em>
-  A "yes" prediction doesn't mean the page will improve if refreshed — that would require an A/B test — but
-  it surfaces the pages most likely to benefit from human review.
-</p>
+<div class="section-heading reveal" id="introduction">
+  <span class="section-num">1</span>
+  <h2>Introduction &amp; Problem Statement: The FlyRank Case Study</h2>
+</div>
+<div class="reveal">
+  <p>
+    FlyRank builds content as infrastructure: it autonomously researches, drafts, publishes, and monitors content straight into client domains, managing tens of thousands of active URLs.
+    At this scale, content decays silently: pages that once drove strong organic traffic slip as search engine algorithms evolve, competitors release newer assets, and search intent shifts.
+    Editorial teams face a high-stakes operational bottleneck: <em>out of thousands of managed pages, which 50 should an editor inspect and refresh this sprint?</em>
+  </p>
+  <p>
+    Historically, production content pipelines rely on hand-crafted heuristic rules — combination thresholds on age, position, and arbitrary health scores.
+    While interpretable, fixed rules fail to capture non-linear trade-offs across engagement, search impressions, and trajectory velocity, yielding low triage precision.
+    This project investigates a learned machine learning alternative framed as an editorial decision-support problem:
+    <em>given trailing behavioral search signals (impressions, click-through rates, user engagement, ranking position, and asset age), can we accurately identify pages in negative impression trends to focus human editorial time?</em>
+  </p>
+  <p>
+    Importantly, a positive prediction indicates prioritization for editorial review, not a guarantee that updating the content will automatically recover rankings.
+    By structuring the problem as decision support with client-holdout validation and transparent reason codes, we deliver a defensible, production-ready prioritization queue that beats rule-based triage by nearly 3×.
+  </p>
+</div>
 
-<div class="info-grid">
-  <div class="info-item">
-    <div class="info-label">Unit of Analysis</div>
-    <div class="info-value">One content page</div>
+<div class="info-mosaic reveal">
+  <div class="info-tile">
+    <div class="tile-label">Unit of Analysis</div>
+    <div class="tile-value">One content page</div>
   </div>
-  <div class="info-item">
-    <div class="info-label">Output</div>
-    <div class="info-value">Ranked queue with scores, reason codes &amp; action labels</div>
+  <div class="info-tile">
+    <div class="tile-label">Operational Problem</div>
+    <div class="tile-value">FlyRank portfolio decay triage</div>
   </div>
-  <div class="info-item">
-    <div class="info-label">Action</div>
-    <div class="info-value">Editor reviews flagged page &amp; decides whether to refresh</div>
+  <div class="info-tile">
+    <div class="tile-label">Learned vs Baseline</div>
+    <div class="tile-value">2.8× Precision@50 lift</div>
   </div>
-  <div class="info-item">
-    <div class="info-label">Cost of a Wrong Call</div>
-    <div class="info-value">~2–6 hours wasted editorial time per false positive</div>
+  <div class="info-tile">
+    <div class="tile-label">Cost of a Wrong Call</div>
+    <div class="tile-value">~2–6 hrs wasted editorial time</div>
   </div>
 </div>
 
 <!-- ── 2. DATA ── -->
-<h2 id="data"><span class="num">2</span> Data</h2>
-<p>
-  The dataset is the <strong>FlyRank ML Internship anonymized starter release</strong>: 30,000 rows × 44 columns,
-  one row per pseudonymized content page, covering 32 pseudonymized clients.
-  All metrics are aggregated over a trailing 90-day window.
-</p>
+<div class="section-heading reveal" id="data">
+  <span class="section-num">2</span>
+  <h2>Data</h2>
+</div>
+<div class="reveal">
+  <p>
+    The dataset is the <strong>FlyRank ML Internship anonymized starter release</strong>: 30,000 rows × 44 columns,
+    one row per pseudonymized content page, covering 32 pseudonymized clients.
+    All metrics are aggregated over a trailing 90-day window.
+  </p>
+</div>
 
-<table>
-  <tr><th>Property</th><th>Value</th></tr>
-  <tr><td>Total pages</td><td class="num">30,000</td></tr>
-  <tr><td>Clients (pseudonymized)</td><td class="num">32</td></tr>
-  <tr><td>Columns (raw → engineered)</td><td class="num">44 → 52</td></tr>
-  <tr><td>Label: <code>is_declining_label</code></td><td class="num">54.2% positive</td></tr>
-  <tr><td>Metric window</td><td class="num">Trailing 90 days</td></tr>
-</table>
+<div class="table-wrap reveal">
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Total pages</td><td class="num">30,000</td></tr>
+    <tr><td>Clients (pseudonymized)</td><td class="num">32</td></tr>
+    <tr><td>Columns (raw → engineered)</td><td class="num">44 → 52</td></tr>
+    <tr><td>Label: <code>is_declining_label</code></td><td class="num">54.2% positive</td></tr>
+    <tr><td>Metric window</td><td class="num">Trailing 90 days</td></tr>
+  </table>
+</div>
 
-<h3>What was excluded and why</h3>
-<ul>
-  <li><strong><code>trend_direction</code> and <code>trend_pct</code></strong> — the label is derived from these; using them is direct leakage.</li>
-  <li><strong><code>content_id</code> and <code>client_id</code></strong> — pseudonymous identifiers used only for grouping, never as features.</li>
-  <li><strong><code>provider_used</code> and <code>model_used</code></strong> — LLM provenance columns, not performance signals.</li>
-  <li><strong>No client names, URLs, domains, or raw queries</strong> appear anywhere in this work.</li>
-</ul>
+<div class="reveal">
+  <h3>What was excluded and why</h3>
+  <ul>
+    <li><strong><code>trend_direction</code> and <code>trend_pct</code></strong> — the label is derived from these; using them is direct leakage.</li>
+    <li><strong><code>content_id</code> and <code>client_id</code></strong> — pseudonymous identifiers used only for grouping, never as features.</li>
+    <li><strong><code>provider_used</code> and <code>model_used</code></strong> — LLM provenance columns, not performance signals.</li>
+    <li><strong>No client names, URLs, domains, or raw queries</strong> appear anywhere in this work.</li>
+  </ul>
+</div>
 
 <!-- ── 3. METHODOLOGY ── -->
-<h2 id="methodology"><span class="num">3</span> Methodology</h2>
+<div class="section-heading reveal" id="methodology">
+  <span class="section-num">3</span>
+  <h2>Methodology</h2>
+</div>
 
-<h3>Label definition</h3>
-<p>
-  <code>is_declining_label = 1</code> when <code>trend_direction == "down"</code> (impression change &lt; −20% between
-  the most recent 30 days and the prior 30 days). This is a <em>proxy</em> for editorial attention priority.
-</p>
+<div class="reveal">
+  <h3>Label definition</h3>
+  <p>
+    <code>is_declining_label = 1</code> when <code>trend_direction == "down"</code> (impression change &lt; −20% between
+    the most recent 30 days and the prior 30 days). This is a <em>proxy</em> for editorial attention priority.
+  </p>
 
-<h3>Feature engineering</h3>
-<p>
-  18 numeric features and 8 categorical features (one-hot encoded), including log-transformed traffic columns
-  and binary indicators. Blanks filled: numerics → 0, categoricals → "unknown".
-</p>
+  <h3>Feature engineering</h3>
+  <p>
+    18 numeric features and 8 categorical features (one-hot encoded), including log-transformed traffic columns
+    and binary indicators. Blanks filled: numerics → 0, categoricals → "unknown".
+  </p>
 
-<h3>Baseline</h3>
-<p>A transparent, hand-crafted rule score combining four sub-scores:</p>
-<ul>
-  <li><strong>Visibility (40%):</strong> percentile rank of log-impressions</li>
-  <li><strong>Freshness risk (30%):</strong> percentile rank of days-since-last-update</li>
-  <li><strong>Position opportunity (25%):</strong> normalized position × visibility</li>
-  <li><strong>Depth gap (5%):</strong> inverse word-count percentile × visibility</li>
-</ul>
+  <h3>Baseline</h3>
+  <p>A transparent, hand-crafted rule score combining four sub-scores:</p>
+  <ul>
+    <li><strong>Visibility (40%):</strong> percentile rank of log-impressions</li>
+    <li><strong>Freshness risk (30%):</strong> percentile rank of days-since-last-update</li>
+    <li><strong>Position opportunity (25%):</strong> normalized position × visibility</li>
+    <li><strong>Depth gap (5%):</strong> inverse word-count percentile × visibility</li>
+  </ul>
 
-<h3>Models trained</h3>
-<ul>
-  <li><strong>Logistic Regression</strong> — linear baseline</li>
-  <li><strong>Decision Tree</strong> (max depth=5) — interpretable, shallow tree</li>
-  <li><strong>Random Forest</strong> (n=200 estimators) — ensemble for comparison</li>
-</ul>
+  <h3>Models trained</h3>
+  <ul>
+    <li><strong>Logistic Regression</strong> — linear baseline</li>
+    <li><strong>Decision Tree</strong> (max depth=5) — interpretable, shallow tree</li>
+    <li><strong>Random Forest</strong> (n=200 estimators) — ensemble for comparison</li>
+  </ul>
 
-<h3>Validation design</h3>
-<p>
-  <strong>Client-holdout split:</strong> ~20% of clients (not rows) held out entirely.
-  No client's pages appear in both train and test. This tests true cross-client generalization.
-</p>
+  <h3>Validation design</h3>
+  <p>
+    <strong>Client-holdout split:</strong> ~20% of clients (not rows) held out entirely.
+    No client's pages appear in both train and test. This tests true cross-client generalization.
+  </p>
 
-<h3>Leakage checks</h3>
-<ul>
-  <li>Programmatic assertion: zero forbidden columns in feature set ✅</li>
-  <li>Injection attack test: deliberately injecting leaked feature produces near-perfect scores ✅</li>
-  <li>Both checks documented in <a href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">w06_validation_audit.ipynb</a></li>
-</ul>
+  <h3>Leakage checks</h3>
+  <ul>
+    <li>Programmatic assertion: zero forbidden columns in feature set ✅</li>
+    <li>Injection attack test: deliberately injecting leaked feature produces near-perfect scores ✅</li>
+    <li>Both checks documented in <a href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">w06_validation_audit.ipynb</a></li>
+  </ul>
+</div>
 
 <!-- ── 4. RESULTS ── -->
-<h2 id="results"><span class="num">4</span> Results</h2>
+<div class="section-heading reveal" id="results">
+  <span class="section-num">4</span>
+  <h2>Results</h2>
+</div>
 
-<div class="metrics-grid">
-  <div class="metric-card primary">
-    <div class="value">0.68</div>
-    <div class="label">Precision@50<br>Decision Tree</div>
+<div class="metric-strip reveal">
+  <div class="metric-block hero-metric">
+    <div class="metric-val">0.68</div>
+    <div class="metric-label">Precision@50<br>Decision Tree</div>
   </div>
-  <div class="metric-card">
-    <div class="value" style="color:var(--text-dim)">0.24</div>
-    <div class="label">Precision@50<br>Baseline Rules</div>
+  <div class="metric-block">
+    <div class="metric-val" style="color:var(--text-ghost)">0.24</div>
+    <div class="metric-label">Precision@50<br>Baseline Rules</div>
   </div>
-  <div class="metric-card">
-    <div class="value" style="color:var(--green)">2.8×</div>
-    <div class="label">Lift over<br>Baseline</div>
+  <div class="metric-block">
+    <div class="metric-val" style="color:var(--emerald)">2.8×</div>
+    <div class="metric-label">Lift over<br>Baseline</div>
   </div>
-  <div class="metric-card">
-    <div class="value" style="color:var(--amber)">0.39</div>
-    <div class="label">Base Rate<br>(Random)</div>
+  <div class="metric-block">
+    <div class="metric-val" style="color:var(--amber)">0.39</div>
+    <div class="metric-label">Base Rate<br>(Random)</div>
   </div>
 </div>
 
-<table>
-  <tr>
-    <th>Model</th><th>P@20</th><th>P@50</th><th>ROC-AUC</th><th>Avg Precision</th>
-  </tr>
-  <tr><td>Baseline rules</td><td class="num">0.15</td><td class="num">0.24</td><td class="num">0.627</td><td class="num">0.468</td></tr>
-  <tr><td>Logistic Regression</td><td class="num">0.35</td><td class="num">0.40</td><td class="num">0.700</td><td class="num">0.522</td></tr>
-  <tr class="winner"><td>Decision Tree (depth=5) ★</td><td class="num">0.80</td><td class="num">0.68</td><td class="num">0.742</td><td class="num">0.575</td></tr>
-  <tr><td>Random Forest (n=200)</td><td class="num">0.70</td><td class="num">0.68</td><td class="num">0.747</td><td class="num">0.610</td></tr>
-</table>
+<div class="table-wrap reveal">
+  <table>
+    <tr>
+      <th>Model</th><th>P@20</th><th>P@50</th><th>ROC-AUC</th><th>Avg Precision</th>
+    </tr>
+    <tr><td>Baseline rules</td><td class="num">0.15</td><td class="num">0.24</td><td class="num">0.627</td><td class="num">0.468</td></tr>
+    <tr><td>Logistic Regression</td><td class="num">0.35</td><td class="num">0.40</td><td class="num">0.700</td><td class="num">0.522</td></tr>
+    <tr class="winner"><td>Decision Tree (depth=5) ★</td><td class="num">0.80</td><td class="num">0.68</td><td class="num">0.742</td><td class="num">0.575</td></tr>
+    <tr><td>Random Forest (n=200)</td><td class="num">0.70</td><td class="num">0.68</td><td class="num">0.747</td><td class="num">0.610</td></tr>
+  </table>
+</div>
 
-<p>
-  The decision tree achieves P@50 = 0.68 on the client-holdout split: <strong>34 of the top 50 flagged pages are genuinely declining</strong>.
-  Random Forest matches on P@50 but the Decision Tree's interpretability makes it the preferred production model.
-</p>
+<div class="reveal">
+  <p>
+    The decision tree achieves P@50&nbsp;=&nbsp;0.68 on the client-holdout split: <strong>34 of the top 50 flagged pages are genuinely declining</strong>.
+    Random Forest matches on P@50 but the Decision Tree's interpretability makes it the preferred production model.
+  </p>
+</div>
 
 <!-- Chart: Feature Importance -->
-<div class="chart-wrap">
+<div class="chart-card reveal">
   <svg class="bar-animated" xmlns="http://www.w3.org/2000/svg" width="680" height="310" viewBox="0 0 680 310">
     <defs>
       <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#38bdf8"/>
-        <stop offset="100%" stop-color="#818cf8"/>
+        <stop offset="0%" stop-color="#22d3ee"/>
+        <stop offset="100%" stop-color="#6366f1"/>
       </linearGradient>
     </defs>
-    <text x="340" y="24" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" fill="#94a3b8" font-weight="600">TOP FEATURE IMPORTANCES — DECISION TREE</text>
-    <text x="210" y="62" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">days_with_impressions</text>
-    <rect class="bar" x="220" y="48" width="380" height="22" fill="url(#barGrad)" rx="4"/>
+    <text x="340" y="24" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="14" fill="#64748b" font-weight="600">TOP FEATURE IMPORTANCES — DECISION TREE</text>
+    <text x="210" y="62" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">days_with_impressions</text>
+    <rect class="bar" x="220" y="48" width="380" height="22" fill="url(#barGrad)" rx="6"/>
     <text x="608" y="64" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.433</text>
-    <text x="210" y="100" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">content_age_days</text>
-    <rect class="bar" x="220" y="86" width="218" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.1s"/>
+    <text x="210" y="100" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">content_age_days</text>
+    <rect class="bar" x="220" y="86" width="218" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.1s"/>
     <text x="446" y="102" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.249</text>
-    <text x="210" y="138" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">days_with_sessions</text>
-    <rect class="bar" x="220" y="124" width="90" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.2s"/>
+    <text x="210" y="138" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">days_with_sessions</text>
+    <rect class="bar" x="220" y="124" width="90" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.2s"/>
     <text x="318" y="140" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.103</text>
-    <text x="210" y="176" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">avg_position</text>
-    <rect class="bar" x="220" y="162" width="88" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.3s"/>
+    <text x="210" y="176" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">avg_position</text>
+    <rect class="bar" x="220" y="162" width="88" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.3s"/>
     <text x="316" y="178" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.101</text>
-    <text x="210" y="214" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">scroll_rate</text>
-    <rect class="bar" x="220" y="200" width="34" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.4s"/>
+    <text x="210" y="214" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">scroll_rate</text>
+    <rect class="bar" x="220" y="200" width="34" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.4s"/>
     <text x="262" y="216" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.039</text>
-    <text x="210" y="252" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">char_count</text>
-    <rect class="bar" x="220" y="238" width="23" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.5s"/>
+    <text x="210" y="252" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">char_count</text>
+    <rect class="bar" x="220" y="238" width="23" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.5s"/>
     <text x="251" y="254" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.026</text>
-    <text x="210" y="290" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">ctr</text>
-    <rect class="bar" x="220" y="276" width="21" height="22" fill="url(#barGrad)" rx="4" style="animation-delay:0.6s"/>
+    <text x="210" y="290" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">ctr</text>
+    <rect class="bar" x="220" y="276" width="21" height="22" fill="url(#barGrad)" rx="6" style="animation-delay:0.6s"/>
     <text x="249" y="292" font-family="JetBrains Mono,monospace" font-size="12" fill="#e2e8f0">0.024</text>
   </svg>
-  <div class="chart-caption">Impression-active days and content age together account for 68% of all model splits.</div>
+  <div class="chart-note">Impression-active days and content age together account for 68% of all model splits.</div>
 </div>
 
 <!-- Chart: Model Comparison -->
-<div class="chart-wrap">
+<div class="chart-card reveal">
   <svg xmlns="http://www.w3.org/2000/svg" width="680" height="240" viewBox="0 0 680 240">
     <defs>
-      <linearGradient id="winGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
+      <linearGradient id="winGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
     </defs>
-    <text x="340" y="24" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" fill="#94a3b8" font-weight="600">PRECISION@50 — MODEL VS BASELINE</text>
-    <text x="170" y="68" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#64748b">Baseline rules</text>
-    <rect x="180" y="54" width="96" height="24" fill="#334155" rx="4"/>
+    <text x="340" y="24" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="14" fill="#64748b" font-weight="600">PRECISION@50 — MODEL VS BASELINE</text>
+    <text x="170" y="68" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#475569">Baseline rules</text>
+    <rect x="180" y="54" width="96" height="24" fill="#283548" rx="6"/>
     <text x="284" y="71" font-family="JetBrains Mono,monospace" font-size="12" fill="#94a3b8">0.24</text>
-    <text x="170" y="108" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">Logistic Regression</text>
-    <rect x="180" y="94" width="160" height="24" fill="#7c3aed" rx="4" opacity="0.6"/>
-    <text x="348" y="111" font-family="JetBrains Mono,monospace" font-size="12" fill="#c4b5fd">0.40</text>
-    <text x="170" y="148" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#e2e8f0" font-weight="600">Decision Tree ★</text>
-    <rect x="180" y="134" width="272" height="24" fill="url(#winGrad)" rx="4"/>
+    <text x="170" y="108" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">Logistic Regression</text>
+    <rect x="180" y="94" width="160" height="24" fill="#6366f1" rx="6" opacity="0.5"/>
+    <text x="348" y="111" font-family="JetBrains Mono,monospace" font-size="12" fill="#a5b4fc">0.40</text>
+    <text x="170" y="148" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#e2e8f0" font-weight="600">Decision Tree ★</text>
+    <rect x="180" y="134" width="272" height="24" fill="url(#winGrad)" rx="6"/>
     <text x="460" y="151" font-family="JetBrains Mono,monospace" font-size="13" fill="#e2e8f0" font-weight="600">0.68</text>
-    <text x="170" y="188" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">Random Forest</text>
-    <rect x="180" y="174" width="272" height="24" fill="#3b82f6" rx="4" opacity="0.6"/>
+    <text x="170" y="188" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">Random Forest</text>
+    <rect x="180" y="174" width="272" height="24" fill="#3b82f6" rx="6" opacity="0.5"/>
     <text x="460" y="191" font-family="JetBrains Mono,monospace" font-size="12" fill="#93c5fd">0.68</text>
-    <line x1="336" y1="44" x2="336" y2="205" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <text x="338" y="220" font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">base rate 0.39</text>
+    <line x1="336" y1="44" x2="336" y2="205" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="338" y="220" font-family="JetBrains Mono,monospace" font-size="10" fill="#f43f5e">base rate 0.39</text>
   </svg>
-  <div class="chart-caption">All models substantially exceed the base rate (dashed red). Decision Tree selected for interpretability.</div>
+  <div class="chart-note">All models substantially exceed the base rate (dashed red). Decision Tree selected for interpretability.</div>
 </div>
 
 <!-- Chart: Action Distribution -->
-<div class="chart-wrap">
+<div class="chart-card reveal">
   <svg xmlns="http://www.w3.org/2000/svg" width="680" height="260" viewBox="0 0 680 260">
-    <text x="340" y="24" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" fill="#94a3b8" font-weight="600">RECOMMENDED ACTION DISTRIBUTION — 30,000 PAGES</text>
-    <text x="200" y="66" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">monitor</text>
-    <rect x="210" y="52" width="185" height="22" fill="#a78bfa" rx="4"/>
+    <text x="340" y="24" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="14" fill="#64748b" font-weight="600">RECOMMENDED ACTION DISTRIBUTION — 30,000 PAGES</text>
+    <text x="200" y="66" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">monitor</text>
+    <rect x="210" y="52" width="185" height="22" fill="#8b5cf6" rx="6"/>
     <text x="403" y="68" font-family="JetBrains Mono,monospace" font-size="11" fill="#c4b5fd">13,069 (43.6%)</text>
-    <text x="200" y="104" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">refresh</text>
-    <rect x="210" y="90" width="116" height="22" fill="#38bdf8" rx="4"/>
-    <text x="334" y="106" font-family="JetBrains Mono,monospace" font-size="11" fill="#7dd3fc">8,207 (27.4%)</text>
-    <text x="200" y="142" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">refresh + review ctr</text>
-    <rect x="210" y="128" width="94" height="22" fill="#818cf8" rx="4"/>
+    <text x="200" y="104" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">refresh</text>
+    <rect x="210" y="90" width="116" height="22" fill="#22d3ee" rx="6"/>
+    <text x="334" y="106" font-family="JetBrains Mono,monospace" font-size="11" fill="#67e8f9">8,207 (27.4%)</text>
+    <text x="200" y="142" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">refresh + review ctr</text>
+    <rect x="210" y="128" width="94" height="22" fill="#6366f1" rx="6"/>
     <text x="312" y="144" font-family="JetBrains Mono,monospace" font-size="11" fill="#a5b4fc">6,655 (22.2%)</text>
-    <text x="200" y="180" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">refresh + review eng.</text>
-    <rect x="210" y="166" width="28" height="22" fill="#f472b6" rx="4"/>
+    <text x="200" y="180" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">refresh + review eng.</text>
+    <rect x="210" y="166" width="28" height="22" fill="#ec4899" rx="6"/>
     <text x="246" y="182" font-family="JetBrains Mono,monospace" font-size="11" fill="#f9a8d4">1,987 (6.6%)</text>
-    <text x="200" y="218" text-anchor="end" font-family="Inter,sans-serif" font-size="12" fill="#94a3b8">expand + refresh</text>
-    <rect x="210" y="204" width="2" height="22" fill="#fbbf24" rx="4"/>
+    <text x="200" y="218" text-anchor="end" font-family="Outfit,sans-serif" font-size="12" fill="#94a3b8">expand + refresh</text>
+    <rect x="210" y="204" width="2" height="22" fill="#f59e0b" rx="6"/>
     <text x="220" y="220" font-family="JetBrains Mono,monospace" font-size="11" fill="#fde68a">82 (0.3%)</text>
   </svg>
-  <div class="chart-caption">56.4% of pages are flagged for some form of action; 43.6% recommended for monitoring only.</div>
+  <div class="chart-note">56.4% of pages are flagged for some form of action; 43.6% recommended for monitoring only.</div>
 </div>
 
 <!-- ── 5. LIMITATIONS ── -->
-<h2 id="limitations"><span class="num">5</span> Limitations &amp; Honest Framing</h2>
+<div class="section-heading reveal" id="limitations">
+  <span class="section-num">5</span>
+  <h2>Limitations &amp; Honest Framing</h2>
+</div>
 
-<div class="limit-card">
-  <strong>Cross-sectional, not causal.</strong>
-  This analysis observes associations between behavioral signals and declining trends. It does not establish
-  that refreshing a flagged page will reverse the decline. An A/B test would be needed.
-</div>
-<div class="limit-card">
-  <strong>One snapshot in time.</strong>
-  Trained on a single 90-day window. Seasonal effects, algorithm updates, or market shifts
-  may change which signals matter.
-</div>
-<div class="limit-card">
-  <strong>32 clients only.</strong>
-  Generalization to clients with very different content profiles has not been tested.
-  New clients should be validated before applying the queue.
-</div>
-<div class="limit-card">
-  <strong>No content-quality features.</strong>
-  The model uses behavioral signals only. It cannot assess whether
-  content is factually accurate, well-written, or topically relevant.
-</div>
-<div class="limit-card">
-  <strong>Label is a proxy.</strong>
-  Impression decline doesn't always mean the content needs refreshing — seasonality, product sunsetting,
-  or intentional deprioritization are all valid reasons.
-</div>
-<div class="limit-card">
-  <strong>False-positive rate in top-50: 32%.</strong>
-  16 of the top 50 predictions are false positives. Human review is mandatory before acting.
+<div class="limitations-stack reveal">
+  <div class="caveat">
+    <strong>Cross-sectional, not causal.</strong>
+    This analysis observes associations between behavioral signals and declining trends. It does not establish
+    that refreshing a flagged page will reverse the decline. An A/B test would be needed.
+  </div>
+  <div class="caveat">
+    <strong>One snapshot in time.</strong>
+    Trained on a single 90-day window. Seasonal effects, algorithm updates, or market shifts
+    may change which signals matter.
+  </div>
+  <div class="caveat">
+    <strong>32 clients only.</strong>
+    Generalization to clients with very different content profiles has not been tested.
+    New clients should be validated before applying the queue.
+  </div>
+  <div class="caveat">
+    <strong>No content-quality features.</strong>
+    The model uses behavioral signals only. It cannot assess whether
+    content is factually accurate, well-written, or topically relevant.
+  </div>
+  <div class="caveat">
+    <strong>Label is a proxy.</strong>
+    Impression decline doesn't always mean the content needs refreshing — seasonality, product sunsetting,
+    or intentional deprioritization are all valid reasons.
+  </div>
+  <div class="caveat">
+    <strong>False-positive rate in top-50: 32%.</strong>
+    16 of the top 50 predictions are false positives. Human review is mandatory before acting.
+  </div>
 </div>
 
 <!-- ── 6. RECOMMENDATIONS ── -->
-<h2 id="recommendations"><span class="num">6</span> Ranked Recommendations</h2>
-<p>
-  Each page receives a blended score (70% model probability + 30% baseline rule score),
-  transparent reason codes, and one of five action labels:
-</p>
+<div class="section-heading reveal" id="recommendations">
+  <span class="section-num">6</span>
+  <h2>Ranked Recommendations</h2>
+</div>
+<div class="reveal">
+  <p>
+    Each page receives a blended score (70% model probability + 30% baseline rule score),
+    transparent reason codes, and one of five action labels:
+  </p>
+</div>
 
-<table>
-  <tr><th>Action</th><th>Pages</th><th>Trigger</th><th>Effort</th></tr>
-  <tr><td><code>refresh</code></td><td class="num">8,207</td><td>Decline risk OR stale with demand</td><td>~2h</td></tr>
-  <tr><td><code>refresh_and_review_ctr</code></td><td class="num">6,655</td><td>Above + low CTR on visible page</td><td>~3h</td></tr>
-  <tr><td><code>refresh_and_review_engagement</code></td><td class="num">1,987</td><td>Above + low engagement/scroll</td><td>~3.5h</td></tr>
-  <tr><td><code>expand_and_refresh</code></td><td class="num">82</td><td>Thin page (&lt;1,200 words) with demand</td><td>~6h</td></tr>
-  <tr><td><code>monitor</code></td><td class="num">13,069</td><td>No urgent signals detected</td><td>0</td></tr>
-</table>
+<div class="table-wrap reveal">
+  <table>
+    <tr><th>Action</th><th>Pages</th><th>Trigger</th><th>Effort</th></tr>
+    <tr><td><code>refresh</code></td><td class="num">8,207</td><td>Decline risk OR stale with demand</td><td>~2h</td></tr>
+    <tr><td><code>refresh_and_review_ctr</code></td><td class="num">6,655</td><td>Above + low CTR on visible page</td><td>~3h</td></tr>
+    <tr><td><code>refresh_and_review_engagement</code></td><td class="num">1,987</td><td>Above + low engagement/scroll</td><td>~3.5h</td></tr>
+    <tr><td><code>expand_and_refresh</code></td><td class="num">82</td><td>Thin page (&lt;1,200 words) with demand</td><td>~6h</td></tr>
+    <tr><td><code>monitor</code></td><td class="num">13,069</td><td>No urgent signals detected</td><td>0</td></tr>
+  </table>
+</div>
 
-<p>
-  <strong>3,576 pages</strong> are flagged as high confidence (top-20% score + 500+ impressions + model probability ≥ 0.50).
-  These are the recommended first batch for a team sprint.
-</p>
+<div class="reveal">
+  <p>
+    <strong>3,576 pages</strong> are flagged as high confidence (top-20% score + 500+ impressions + model probability ≥ 0.50).
+    These are the recommended first batch for a team sprint.
+  </p>
 
-<h3>What should never be automated</h3>
-<ul>
-  <li>Publishing a refresh without human review</li>
-  <li>Deleting or redirecting pages based on model scores alone — 32% FP rate</li>
-  <li>Promising clients that refresh "will improve rankings" — no causal evidence</li>
-  <li>Applying the queue to new clients without re-validation</li>
-</ul>
+  <h3>What should never be automated</h3>
+  <ul>
+    <li>Publishing a refresh without human review</li>
+    <li>Deleting or redirecting pages based on model scores alone — 32% FP rate</li>
+    <li>Promising clients that refresh "will improve rankings" — no causal evidence</li>
+    <li>Applying the queue to new clients without re-validation</li>
+  </ul>
+</div>
 
 <!-- ── 7. REPRODUCIBILITY ── -->
-<h2 id="reproducibility"><span class="num">7</span> Reproducibility</h2>
+<div class="section-heading reveal" id="reproducibility">
+  <span class="section-num">7</span>
+  <h2>Reproducibility</h2>
+</div>
 
-<ol>
-  <li>Clone: <code>git clone https://github.com/ErenSnowh/flyrank-ml-internship.git</code></li>
-  <li>Install: <code>pip install -r requirements.txt</code></li>
-  <li>Run the reference pipeline: <code>python scripts/run_all.py</code></li>
-  <li>Run lane notebooks in order: <code>w01_*.ipynb</code> through <code>w07_*.ipynb</code></li>
-</ol>
-<p><strong>Random seed:</strong> <code>random_state=42</code> throughout. <strong>Key deps:</strong> pandas, numpy, scikit-learn, matplotlib.</p>
+<div class="reveal">
+  <ol>
+    <li>Clone: <code>git clone https://github.com/ErenSnowh/flyrank-ml-internship.git</code></li>
+    <li>Install: <code>pip install -r requirements.txt</code></li>
+    <li>Run the reference pipeline: <code>python scripts/run_all.py</code></li>
+    <li>Run lane notebooks in order: <code>w01_*.ipynb</code> through <code>w07_*.ipynb</code></li>
+  </ol>
+  <p><strong>Random seed:</strong> <code>random_state=42</code> throughout. <strong>Key deps:</strong> pandas, numpy, scikit-learn, matplotlib.</p>
+</div>
 
-<h3>Notebooks</h3>
-<div class="notebook-grid">
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w01_research_question.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w01 — Research Question</span><br><span class="nb-desc">ML-02</span></span>
+<h3 class="reveal">Notebooks</h3>
+<div class="nb-grid reveal">
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w01_research_question.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w01 — Research Question</span><br><span class="nb-sub">ML-02</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w02_ml_task_framing.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w02 — ML Task Framing</span><br><span class="nb-desc">ML-03</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w02_ml_task_framing.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w02 — ML Task Framing</span><br><span class="nb-sub">ML-03</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w03_data_contract.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w03 — Data Contract</span><br><span class="nb-desc">ML-04</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w03_data_contract.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w03 — Data Contract</span><br><span class="nb-sub">ML-04</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w04_baseline_score.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w04 — Baseline Score</span><br><span class="nb-desc">ML-07</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w04_baseline_score.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w04 — Baseline Score</span><br><span class="nb-sub">ML-07</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w05_model.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w05 — Model Training</span><br><span class="nb-desc">ML-08</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w05_model.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w05 — Model Training</span><br><span class="nb-sub">ML-08</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w06 — Validation Audit</span><br><span class="nb-desc">ML-09</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w06 — Validation Audit</span><br><span class="nb-sub">ML-09</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w07_action_playbook.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">w07 — Action Playbook</span><br><span class="nb-desc">ML-10</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/w07_action_playbook.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">w07 — Action Playbook</span><br><span class="nb-sub">ML-10</span></span>
   </a>
-  <a class="notebook-link" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">
-    <span class="nb-icon">📓</span>
-    <span><span class="nb-name">Capstone</span><br><span class="nb-desc">ML-11 / ML-12</span></span>
+  <a class="nb-card" href="https://github.com/ErenSnowh/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">
+    <span class="nb-ico">📓</span>
+    <span><span class="nb-title">Capstone</span><br><span class="nb-sub">ML-11 / ML-12</span></span>
   </a>
 </div>
 
 <!-- ── 8. ACKNOWLEDGMENTS ── -->
-<h2 id="acknowledgments"><span class="num">8</span> Acknowledgments &amp; Data Credit</h2>
-<p>
-  Built on the <strong>FlyRank ML Internship dataset</strong> — a pseudonymized, multi-client content performance
-  dataset designed for applied machine learning research.
-  Data provided by <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>.
-</p>
-<p>
-  Thanks to the FlyRank internship mentors and the ML track community for guidance, live sessions,
-  and code review throughout the program.
-</p>
+<div class="section-heading reveal" id="acknowledgments">
+  <span class="section-num">8</span>
+  <h2>Acknowledgments &amp; Data Credit</h2>
+</div>
+<div class="reveal">
+  <p>
+    Built on the <strong>FlyRank ML Internship dataset</strong> — a pseudonymized, multi-client content performance
+    dataset designed for applied machine learning research.
+    Data provided by <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>.
+  </p>
+  <p>
+    Thanks to the FlyRank internship mentors and the ML track community for guidance, live sessions,
+    and code review throughout the program.
+  </p>
+</div>
 
 </main>
 
-<footer class="footer">
-  <p>
-    © 2026 Vinayak Suresh Menon ·
-    <a href="https://github.com/ErenSnowh/flyrank-ml-internship">Repository</a> ·
-    Built with the <a href="https://flyrank.ai">FlyRank ML Internship</a> dataset
-  </p>
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>Vinayak Pandey</h3>
+        <p>ML Research · Cybersecurity & Digital Forensics · Building models that work on messy real data — and being honest about their limits.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Links</h4>
+        <a href="https://github.com/ErenSnowh/flyrank-ml-internship" target="_blank" rel="noopener">GitHub Repo</a>
+        <a href="https://allabtme.vercel.app/" target="_blank" rel="noopener">Portfolio & Forensics</a>
+        <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>
+      </div>
+      <div class="footer-col">
+        <h4>Paper</h4>
+        <a href="#abstract">Abstract</a>
+        <a href="#results">Results</a>
+        <a href="#recommendations">Actions</a>
+        <a href="#reproducibility">Reproduce</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Vinayak Pandey · All rights reserved</span>
+      <span>
+        <a href="https://allabtme.vercel.app/" target="_blank" rel="noopener">allabtme.vercel.app</a> ·
+        <a href="https://github.com/ErenSnowh" target="_blank" rel="noopener">github.com/ErenSnowh</a>
+      </span>
+    </div>
+  </div>
 </footer>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+  // ── Scroll-reveal observer ──
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  revealEls.forEach(el => revealObserver.observe(el));
+
+  // ── Nav scroll shadow ──
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  // ── Active nav link highlight ──
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const linkObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+  sections.forEach(section => linkObserver.observe(section));
+
+  // ── Mobile hamburger toggle ──
+  const toggle = document.getElementById('nav-toggle');
+  const navLinksEl = document.getElementById('nav-links');
+  const overlay = document.getElementById('nav-overlay');
+
+  function closeMenu() {
+    toggle.classList.remove('open');
+    navLinksEl.classList.remove('open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  toggle.addEventListener('click', () => {
+    const isOpen = toggle.classList.toggle('open');
+    navLinksEl.classList.toggle('open', isOpen);
+    overlay.classList.toggle('show', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  overlay.addEventListener('click', closeMenu);
+  navLinksEl.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  // ── Close on Escape ──
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+</script>
 
 </body>
 </html>
