@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Vinayak Pandey//Career Platform SOP//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:20261016T100000Z-fl-capstone-vinayak@allabtme.vercel.app
+DTSTAMP:20260916T133000Z
+DTSTART:20261016T100000Z
+DTEND:20261016T120000Z
+RRULE:FREQ=MONTHLY;BYDAY=3FR
+SUMMARY:🚀 Ship Next Case Study: Forensic Telemetry Anomaly Detection
+DESCRIPTION:Vinayak Pandey - Career Platform Maintenance Sprint.\n\nTask: Add the next applied ML case study to https://allabtme.vercel.app/ using the 3-beat framework (Problem -> What I Did -> What Came of It).\n\nFocus: Autonomous Forensic Telemetry Anomaly Detection in Windows Security Event Logs.\n\nContext preserved in work/fl_capstone_impact_project.md.
+LOCATION:Personal Workspace / Portfolio Deployment
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT24H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Ship Next Portfolio Case Study Tomorrow
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Next Case Study Sprint Starts in 1 Hour
+END:VALARM
+END:VEVENT
+END:VCALENDAR
